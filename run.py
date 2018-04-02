@@ -24,11 +24,11 @@ class Scrapper:
     def _get_journals(self):
         # Reading journals
         logging.info("Getting journal info")
-        journals = dict()
+        journals = []
         with open(JOURNAL_TEXT, 'r') as f:
             for line in f:
-                journals[line.strip()] = 0
-        return journals.keys()
+                journals.append(line.strip())
+        return journals
 
     def _get_csv(self):
         logging.info("Preparing CSV file")
@@ -98,7 +98,7 @@ class Scrapper:
         try:
             row = self.driver.find_element_by_link_text(journal)
         except:
-            logging.error("Journal not found")
+            logging.error("Journal {} not found".format(journal))
             return 0, 0
         else:
             alter = row.find_element_by_xpath("../../..")
@@ -117,27 +117,27 @@ class Scrapper:
 
     def main(self):
         start_time = time.time()
-        self.login()
-        for main_journal in self.journals:
-            self.csv.write(main_journal + ",")
-            self.csv_2016.write(main_journal + ",")
-            self.select_journal(main_journal)
-            ALL = []
-            YEAR_2016 = []
-            for sub_journal in self.journals:
-                value, value_2016 = self.get_citing_data(sub_journal)
-                logging.info("{} citing {} in all years : {} times".format(main_journal, sub_journal, value))
-                logging.info("{} citing {} in 2016 : {} times".format(main_journal, sub_journal, value_2016))
-                ALL.append(str(value))
-                YEAR_2016.append(str(value_2016))
-            self.csv.write(",".join(ALL))
-            self.csv_2016.write(",".join(YEAR_2016))
-            self.csv.write("\n")
-            self.csv_2016.write("\n")
-            self.driver.find_element_by_link_text("Home").click()
+        # self.login()
+        # for main_journal in self.journals:
+        #     self.csv.write(main_journal + ",")
+        #     self.csv_2016.write(main_journal + ",")
+        #     self.select_journal(main_journal)
+        #     ALL = []
+        #     YEAR_2016 = []
+        #     for sub_journal in self.journals:
+        #         value, value_2016 = self.get_citing_data(sub_journal)
+        #         logging.info("{} citing {} in all years : {} times".format(main_journal, sub_journal, value))
+        #         logging.info("{} citing {} in 2016 : {} times".format(main_journal, sub_journal, value_2016))
+        #         ALL.append(str(value))
+        #         YEAR_2016.append(str(value_2016))
+        #     self.csv.write(",".join(ALL))
+        #     self.csv_2016.write(",".join(YEAR_2016))
+        #     self.csv.write("\n")
+        #     self.csv_2016.write("\n")
+        #     self.driver.find_element_by_link_text("Home").click()
 
-        self.csv.close()
-        self.csv_2016.close()
+        # self.csv.close()
+        # self.csv_2016.close()
         elapsed_time = time.time() - start_time
         logging.info("Elapsed time: {}".format(time.strftime("%H:%M:%S", time.gmtime(elapsed_time))))
 
