@@ -1,13 +1,18 @@
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
-from selenium.webdriver.common.keys import Keys
+from bs4 import BeautifulSoup
 
 import time
 import logging
 
 NUS_ID = ""
 NUS_PASSWORD = ""
+ID_TYPE = "NUSSTU"
+START_INDEX = 0
+LENGTH = 250
 
+CHROME_PATH = './chromedriver'
+TOTAL_JOURNAL = 1493
 LOGIN_LINK = "https://proxylogin.nus.edu.sg/libproxy1/public/login.asp?logup=false&url=https://jcr.incites.thomsonreuters.com"
 JOURNAL_TEXT = "journals.txt"
 CSV_ALL_RESULT = "result_all.csv"
@@ -17,29 +22,32 @@ class Scrapper:
 
     def __init__(self):
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-        self.journals = self._get_journals()
+        self.journals_dict, self.journals_list = self._get_journals()
         self.csv, self.csv_2016 = self._get_csv()
         self.driver = self._get_driver()
+        self.soup = None
 
     def _get_journals(self):
         # Reading journals
         logging.info("Getting journal info")
-        journals = []
+        journals = dict()
+        journal_list = []
         with open(JOURNAL_TEXT, 'r') as f:
             for line in f:
-                journals.append(line.strip())
-        return journals
+                journals[line.strip()] = 0
+                journal_list.append(line.strip())
+        return journals, journal_list
 
     def _get_csv(self):
         logging.info("Preparing CSV file")
         csv = open(CSV_ALL_RESULT, 'w')
         csv.write("Journal Name,")
-        csv.write(",".join(self.journals))
+        csv.write(",".join(self.journals_list))
         csv.write("\n")
 
         csv_2016 = open(CSV_2016_RESULT, 'w')
         csv_2016.write("Journal Name,")
-        csv_2016.write(",".join(self.journals))
+        csv_2016.write(",".join(self.journals_list))
         csv_2016.write("\n")
 
         return csv, csv_2016
@@ -47,7 +55,7 @@ class Scrapper:
     def _get_driver(self):
         # Creating drive
         logging.info("Initializing the driver")
-        driver = webdriver.Chrome('./chromedriver')
+        driver = webdriver.Chrome(CHROME_PATH)
         driver.implicitly_wait(30)
         driver.maximize_window()
         return driver
@@ -57,7 +65,7 @@ class Scrapper:
         logging.info("Signing in to the system")
         self.driver.get(LOGIN_LINK)
         domain = Select(self.driver.find_element_by_name("domain"))
-        domain.select_by_value("NUSSTU")
+        domain.select_by_value(ID_TYPE)
 
         username = self.driver.find_element_by_name("user")
         password = self.driver.find_element_by_name("pass")
@@ -71,75 +79,113 @@ class Scrapper:
     def select_journal(self, journal):
         # Selecting journals
         logging.info("Get journal info of {}".format(journal))
-        self.driver.find_element_by_class_name("checkbox-journals").click()
+        is_clicked = False
+        while not is_clicked:
+            try:
+                self.driver.find_element_by_class_name("checkbox-journals").click()
+            except:
+                pass
+            else:
+                is_clicked = True
+
         journal_search = self.driver.find_element_by_name("journalSearch-inputEl")
         journal_search.send_keys(journal)
-        journal = self.driver.find_element_by_class_name("x-boundlist-item")
-        journal_name = journal.text
         succeed = False
-        if not succeed:
+        journal_name = None
+        while not succeed:
             try:
-                journal.click()
+                _journal = self.driver.find_element_by_class_name("x-boundlist-item")
+                journal_name = _journal.text
+                _journal.click()
             except:
                 journal_search.clear()
-                journal_search.send_keys("journal")
-                self.driver.find_element_by_class_name("x-boundlist-item").clic()
+                journal_search.send_keys(journal)
             else:
                 succeed = True
-
+        logging.info("Clicking {}".format(journal_name))
         self.driver.find_element_by_link_text('Submit').click()
-        self.driver.find_element_by_link_text(journal_name).click()
+        is_clicked = False
+        while not is_clicked:
+            try:
+                self.driver.find_element_by_link_text(journal_name).click()
+            except:
+                pass
+            else:
+                is_clicked = True
+
+        is_citing_journal_clicked = False
+        while not is_citing_journal_clicked:
+            try:
+                self.driver.find_element_by_link_text("Citing Journal Data").click()
+            except:
+                pass
+            else:
+                try:
+                    test = self.driver.find_element_by_link_text("ALL Journals")
+                except:
+                    logging.error("Not Loaded")
+                else:
+                    is_citing_journal_clicked = True
         logging.info("Operation successful")
 
-    def get_citing_data(self, journal):
+    def get_citing_data(self):
         # Get cited journal data
-        logging.info("Getting citing journal data of {}".format(journal))
-        self.driver.find_element_by_link_text("Citing Journal Data").click()
-        try:
-            row = self.driver.find_element_by_link_text(journal)
-        except:
-            logging.error("Journal {} not found".format(journal))
-            return 0, 0
-        else:
-            alter = row.find_element_by_xpath("../../..")
-            rows = alter.find_elements_by_tag_name("td")
-            try:
-                value_all = rows[3].find_element_by_tag_name('a').text
-            except:
-                value_all = 0
+        logging.info("Getting citing data...")
+        table = self.soup.find(id='citingJournalData').find('tbody')
+        rows = table.find_all('tr')
+        ALL = []
+        YEAR_2016 = []
+        temp_dict = dict()
+        for row in rows:
+            cells = row.find_all('td')
+            name = cells[2].text
+            if name in self.journals_dict:
+                value = cells[3].text
+                value_2016 = cells[4].text
+            else:
+                value = "0"
+                value_2016 = "0"
+            temp_dict[name] = {
+                "ALL": value,
+                "2016": value_2016
+            }
+            logging.info("Citing {} in all years : {} times".format(name, value))
+            logging.info("Citing {} in 2016 : {} times".format(name, value_2016))
+        for key in self.journals_list:
+            if key in temp_dict:
+                ALL.append(temp_dict[key]['ALL'])
+                YEAR_2016.append(temp_dict[key]['2016'])
+            else:
+                ALL.append("0")
+                YEAR_2016.append("0")
+        return ALL, YEAR_2016
 
-            try:
-                value_2016 = rows[4].find_element_by_tag_name('a').text
-            except:
-                value_2016 = 0
+    def get_soup(self):
+        html = self.driver.find_element_by_tag_name('html').get_attribute('innerHTML')
+        self.soup = BeautifulSoup(html, 'html.parser')
 
-            return value_all, value_2016
 
     def main(self):
         start_time = time.time()
         self.login()
-        for main_journal in self.journals:
+        END_INDEX = min(START_INDEX + LENGTH, TOTAL_JOURNAL)
+        for main_journal in self.journals_list[START_INDEX:END_INDEX]:
             self.csv.write(main_journal + ",")
             self.csv_2016.write(main_journal + ",")
             self.select_journal(main_journal)
-            ALL = []
-            YEAR_2016 = []
-            for sub_journal in self.journals:
-                value, value_2016 = self.get_citing_data(sub_journal)
-                logging.info("{} citing {} in all years : {} times".format(main_journal, sub_journal, value))
-                logging.info("{} citing {} in 2016 : {} times".format(main_journal, sub_journal, value_2016))
-                ALL.append(str(value))
-                YEAR_2016.append(str(value_2016))
+            self.get_soup()
+            ALL, YEAR_2016 = self.get_citing_data()
             self.csv.write(",".join(ALL))
             self.csv_2016.write(",".join(YEAR_2016))
             self.csv.write("\n")
             self.csv_2016.write("\n")
-            self.driver.find_element_by_link_text("Home").click()
+            self.driver.get("https://jcr-incites-thomsonreuters-com.libproxy1.nus.edu.sg/JCRJournalHomeAction.action?year=&edition=&journal=")
 
         self.csv.close()
         self.csv_2016.close()
         elapsed_time = time.time() - start_time
         logging.info("Elapsed time: {}".format(time.strftime("%H:%M:%S", time.gmtime(elapsed_time))))
+        self.driver.close()
 
 
 if __name__ == '__main__':

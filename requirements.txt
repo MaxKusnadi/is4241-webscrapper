@@ -1,1 +1,4 @@
+beautifulsoup4==4.6.0
+bs4==0.0.1
+pyspark==2.1.0+hadoop2.7
 selenium==3.11.0
