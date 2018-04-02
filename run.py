@@ -9,7 +9,7 @@ NUS_ID = ""
 NUS_PASSWORD = ""
 ID_TYPE = "NUSSTU"
 START_INDEX = 0
-LENGTH = 250
+LENGTH = 300
 
 CHROME_PATH = './chromedriver'
 TOTAL_JOURNAL = 1493
@@ -57,7 +57,6 @@ class Scrapper:
         logging.info("Initializing the driver")
         driver = webdriver.Chrome(CHROME_PATH)
         driver.implicitly_wait(30)
-        driver.maximize_window()
         return driver
 
     def login(self):
@@ -82,22 +81,26 @@ class Scrapper:
         is_clicked = False
         while not is_clicked:
             try:
+                logging.info("Trying to click the sidebar...")
                 self.driver.find_element_by_class_name("checkbox-journals").click()
             except:
                 pass
             else:
                 is_clicked = True
 
+        logging.info("Typing the journal name in the search bar")
         journal_search = self.driver.find_element_by_name("journalSearch-inputEl")
         journal_search.send_keys(journal)
         succeed = False
         journal_name = None
         while not succeed:
             try:
+                logging.info("Clicking on the dropdown options...")
                 _journal = self.driver.find_element_by_class_name("x-boundlist-item")
                 journal_name = _journal.text
                 _journal.click()
             except:
+                logging.error("Dropdown clicking failed")
                 journal_search.clear()
                 journal_search.send_keys(journal)
             else:
@@ -107,8 +110,10 @@ class Scrapper:
         is_clicked = False
         while not is_clicked:
             try:
-                self.driver.find_element_by_link_text(journal_name).click()
+                logging.info("Clicking the journal on the main body")
+                self.driver.find_element_by_partial_link_text(journal_name).click()
             except:
+                logging.error("Clicking failed...")
                 pass
             else:
                 is_clicked = True
@@ -121,7 +126,7 @@ class Scrapper:
                 pass
             else:
                 try:
-                    test = self.driver.find_element_by_link_text("ALL Journals")
+                    test = self.driver.find_element_by_partial_link_text("ALL Journals")
                 except:
                     logging.error("Not Loaded")
                 else:
