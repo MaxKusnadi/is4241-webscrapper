@@ -7,6 +7,7 @@
 4. Ensure your Chrome is version > *64.x.x*. [How to check](https://www.howtogeek.com/299243/which-version-of-chrome-do-i-have/)
 5. Open `run.py`. Put your **NUS ID** and **NUS PASSWORD** in `NUS_ID` and `NUS_PASSWORD` accordingly.
 6. Adjust `START_INDEX` and `CHROME_PATH` if needed
-6. Run `python run.py`
-7. Wait for 1-2 hours
-8. Respective results in `result_2016.csv` and `result_all.csv`
+7. Can change `LENGTH` to 2 or 3 first for testing
+8. Run `python run.py`
+9. Wait for 1-2 hours
+10. Respective results in `result_2016.csv` and `result_all.csv`
