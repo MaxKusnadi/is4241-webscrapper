@@ -106,12 +106,21 @@ class Scrapper:
             else:
                 succeed = True
         logging.info("Clicking {}".format(journal_name))
-        self.driver.find_element_by_link_text('Submit').click()
+        is_submitted = False
+        while not is_submitted:
+            try:
+                self.driver.find_element_by_link_text('Submit').click()
+                self.driver.find_element_by_link_text('Select All')
+            except:
+                pass
+            else:
+                is_submitted = True
+
         is_clicked = False
         while not is_clicked:
             try:
                 logging.info("Clicking the journal on the main body")
-                self.driver.find_element_by_partial_link_text(journal_name).click()
+                self.driver.find_element_by_xpath('//a[contains(translate(., "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "{}")]'.format(journal_name.lower())).click()
             except:
                 logging.error("Clicking failed...")
                 pass
@@ -126,7 +135,7 @@ class Scrapper:
                 pass
             else:
                 try:
-                    test = self.driver.find_element_by_partial_link_text("ALL Journals")
+                    test = self.driver.find_element_by_link_text("ALL Journals")
                 except:
                     logging.error("Not Loaded")
                 else:
