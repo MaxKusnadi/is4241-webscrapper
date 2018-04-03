@@ -183,6 +183,7 @@ class Scrapper:
     def main(self):
         start_time = time.time()
         journal_per_iteration = LENGTH/ITERATION
+        global START_INDEX
         for i in range(ITERATION):
             self.login()
             END_INDEX = min(START_INDEX + journal_per_iteration, TOTAL_JOURNAL)
