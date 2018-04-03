@@ -182,12 +182,14 @@ class Scrapper:
 
     def main(self):
         start_time = time.time()
-        journal_per_iteration = LENGTH/ITERATION
+        journal_per_iteration = int(LENGTH/ITERATION)
         global START_INDEX
+        index = START_INDEX
         for i in range(ITERATION):
             self.login()
             END_INDEX = min(START_INDEX + journal_per_iteration, TOTAL_JOURNAL)
             for main_journal in self.journals_list[START_INDEX:END_INDEX]:
+                logging.info("Getting infor for index {}".format(index))
                 self.csv.write(main_journal + ",")
                 self.csv_2016.write(main_journal + ",")
                 self.select_journal(main_journal)
@@ -198,6 +200,7 @@ class Scrapper:
                 self.csv.write("\n")
                 self.csv_2016.write("\n")
                 self.driver.get("https://jcr-incites-thomsonreuters-com.libproxy1.nus.edu.sg/JCRJournalHomeAction.action?year=&edition=&journal=")
+                index += 1
             START_INDEX += journal_per_iteration
             self.driver.close()
 
