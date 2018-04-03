@@ -8,9 +8,9 @@ import logging
 NUS_ID = ""
 NUS_PASSWORD = ""
 ID_TYPE = "NUSSTU"
-START_INDEX = 0
-LENGTH = 300
-ITERATION = 10
+START_INDEX = 249
+LENGTH = 50
+ITERATION = 1
 
 CHROME_PATH = './chromedriver'
 TOTAL_JOURNAL = 1493
@@ -108,12 +108,16 @@ class Scrapper:
                 succeed = True
         logging.info("Clicking {}".format(journal_name))
         is_submitted = False
+        retry = 0
         while not is_submitted:
+            if retry == 5:
+                self.driver.refresh()
+                retry = 0
             try:
                 self.driver.find_element_by_link_text('Submit').click()
                 self.driver.find_element_by_link_text('Select All')
             except:
-                pass
+                retry += 1
             else:
                 is_submitted = True
 
