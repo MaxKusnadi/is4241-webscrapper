@@ -181,19 +181,22 @@ class Scrapper:
 
     def main(self):
         start_time = time.time()
-        self.login()
-        END_INDEX = min(START_INDEX + LENGTH, TOTAL_JOURNAL)
-        for main_journal in self.journals_list[START_INDEX:END_INDEX]:
-            self.csv.write(main_journal + ",")
-            self.csv_2016.write(main_journal + ",")
-            self.select_journal(main_journal)
-            self.get_soup()
-            ALL, YEAR_2016 = self.get_citing_data()
-            self.csv.write(",".join(ALL))
-            self.csv_2016.write(",".join(YEAR_2016))
-            self.csv.write("\n")
-            self.csv_2016.write("\n")
-            self.driver.get("https://jcr-incites-thomsonreuters-com.libproxy1.nus.edu.sg/JCRJournalHomeAction.action?year=&edition=&journal=")
+        for i in range(10):
+            self.login()
+            END_INDEX = min(START_INDEX + 50, TOTAL_JOURNAL)
+            for main_journal in self.journals_list[START_INDEX:END_INDEX]:
+                self.csv.write(main_journal + ",")
+                self.csv_2016.write(main_journal + ",")
+                self.select_journal(main_journal)
+                self.get_soup()
+                ALL, YEAR_2016 = self.get_citing_data()
+                self.csv.write(",".join(ALL))
+                self.csv_2016.write(",".join(YEAR_2016))
+                self.csv.write("\n")
+                self.csv_2016.write("\n")
+                self.driver.get("https://jcr-incites-thomsonreuters-com.libproxy1.nus.edu.sg/JCRJournalHomeAction.action?year=&edition=&journal=")
+            START_INDEX += 30
+            self.driver.close()
 
         self.csv.close()
         self.csv_2016.close()
