@@ -8,9 +8,9 @@ import logging
 NUS_ID = ""
 NUS_PASSWORD = ""
 ID_TYPE = "NUSSTU"
-START_INDEX = 249
-LENGTH = 50
-ITERATION = 1
+START_INDEX = 0
+LENGTH = 300
+ITERATION = 20
 
 CHROME_PATH = './chromedriver'
 TOTAL_JOURNAL = 1493
@@ -90,8 +90,16 @@ class Scrapper:
                 is_clicked = True
 
         logging.info("Typing the journal name in the search bar")
-        journal_search = self.driver.find_element_by_name("journalSearch-inputEl")
-        journal_search.send_keys(journal)
+        journal_search = None
+        is_found = False
+        while not is_found:
+            try:
+                journal_search = self.driver.find_element_by_name("journalSearch-inputEl")
+            except:
+                pass
+            else:
+                journal_search.send_keys(journal)
+                is_found = True
         succeed = False
         journal_name = None
         while not succeed:
