@@ -10,6 +10,7 @@ NUS_PASSWORD = ""
 ID_TYPE = "NUSSTU"
 START_INDEX = 0
 LENGTH = 300
+ITERATION = 10
 
 CHROME_PATH = './chromedriver'
 TOTAL_JOURNAL = 1493
@@ -181,9 +182,10 @@ class Scrapper:
 
     def main(self):
         start_time = time.time()
-        for i in range(10):
+        journal_per_iteration = LENGTH/ITERATION
+        for i in range(ITERATION):
             self.login()
-            END_INDEX = min(START_INDEX + 50, TOTAL_JOURNAL)
+            END_INDEX = min(START_INDEX + journal_per_iteration, TOTAL_JOURNAL)
             for main_journal in self.journals_list[START_INDEX:END_INDEX]:
                 self.csv.write(main_journal + ",")
                 self.csv_2016.write(main_journal + ",")
@@ -195,7 +197,7 @@ class Scrapper:
                 self.csv.write("\n")
                 self.csv_2016.write("\n")
                 self.driver.get("https://jcr-incites-thomsonreuters-com.libproxy1.nus.edu.sg/JCRJournalHomeAction.action?year=&edition=&journal=")
-            START_INDEX += 30
+            START_INDEX += journal_per_iteration
             self.driver.close()
 
         self.csv.close()
