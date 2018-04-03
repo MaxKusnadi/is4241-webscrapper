@@ -203,6 +203,7 @@ class Scrapper:
                 index += 1
             START_INDEX += journal_per_iteration
             self.driver.close()
+            self.driver = self._get_driver()
 
         self.csv.close()
         self.csv_2016.close()
